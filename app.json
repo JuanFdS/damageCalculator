@@ -1,0 +1,15 @@
+{
+    "name": "Pokemon Damage Calculator in Elm",
+    "repository": "https://github.com/JuanFdS/damageCalculator",
+    "env": {
+	     "ELM_COMPILE": "elm make --output elm.js src/DamageCalculator.elm"
+    },
+    "buildpacks": [
+        {
+            "url": "https://github.com/srid/heroku-buildpack-elm.git"
+        },
+        {
+            "url": "https://github.com/hone/heroku-buildpack-static"
+        }
+    ]
+}
