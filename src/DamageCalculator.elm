@@ -1,37 +1,47 @@
 module DamageCalculator exposing (..)
 import Html exposing (..)
 import Html.Events exposing (..)
+import Html.Attributes exposing (..)
 import SpecialDropdowns exposing (..)
 import Stats exposing (..)
+import StatsKind exposing (..)
+import Input.Number exposing (..)
+import Pokemon exposing (..)
 
 (:=) : String -> Html msg -> Html msg
 (:=) name component = div [] [text name, component]
 infixr 9 :=
 
-main = Html.beginnerProgram { model = model , view = view , update = update }
+main = Html.beginnerProgram { model = pokemon , view = view , update = update }
 
-type alias Model = {ivs : Stats, evs : Stats}
+type Msg = StatsChange (Pokemon -> Pokemon)
 
-type Msg = IvChange (Stats -> Stats) | EvChange (Stats -> Stats) | NoOp
+pokemon : Pokemon
+pokemon = Pokemon.new
 
-model : Model
-model = { ivs = {hp = 0, atk = 0, def = 0, spA = 0, spD = 0, spe = 0},
-          evs = {hp = 0, atk = 0, def = 0, spA = 0, spD = 0, spe = 0}}
-
-update : Msg -> Model -> Model
-update msg model =
+update : Msg -> Pokemon -> Pokemon
+update msg pokemon =
   case msg of
-    IvChange statChange -> { model | ivs = statChange model.ivs }
-    EvChange statChange -> { model | evs = statChange model.evs }
-    NoOp -> model
+    StatsChange statsChange -> statsChange pokemon
 
-statSetterDropdown statType maxValue statSetter = numericDropdown NoOp (statType << statSetter) (List.range 0 maxValue)
+statsRelatedInput : StatsKind -> Pokemon -> Stat -> Html Msg
+statsRelatedInput statsKind pokemon stat  = let valuesRange = validValues statsKind in
+  Input.Number.input {maxLength = Nothing,
+                      maxValue = List.maximum valuesRange,
+                      minValue = List.minimum valuesRange,
+                      hasFocus = Nothing,
+                      onInput = StatsChange << StatsKind.update statsKind << Stats.set stat << Maybe.withDefault 0
+                      } []      (pokemon    |> StatsKind.get    statsKind >> Stats.get stat >> Just)
 
-statsRelatedDropdowns statType maxValue = div [] (List.map (statSetterDropdown statType maxValue) statSetters
-                                                    |> List.map2 (:=) ["HP", "Atk", "Def", "Spa", "SpD", "Spe"])
+statsRelatedInputs : StatsKind -> Pokemon -> Html Msg
+statsRelatedInputs statsKind pokemon =
+  div [] (List.map (statsRelatedInput statsKind pokemon) allStats
+            |> List.map2 (:=) (List.map statName allStats))
 
-view : Model -> Html.Html Msg
-view model = div [] <| [div [] [text <| "The stats on your pokemon are: " ++ toString model],
-                        "IVs: " := (statsRelatedDropdowns IvChange 31),
-                        "EVs: " := (statsRelatedDropdowns EvChange 255)
-                       ]
+view : Pokemon -> Html.Html Msg
+view pokemon = div [] <| [div [] [text <| "The stats on your  are: " ++ toString pokemon],
+                         "Ivs: " := statsRelatedInputs Iv pokemon,
+                         "Evs: " := statsRelatedInputs Ev pokemon,
+                         "Base stats: " := statsRelatedInputs Base pokemon,
+                         "Powerups: " := statsRelatedInputs Powerup pokemon
+                        ]
