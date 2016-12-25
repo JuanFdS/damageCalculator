@@ -1,18 +1,19 @@
 module StatsKind exposing (..)
 
-import Pokemon exposing (..)
 import Stats exposing (..)
+
+type alias WithStats a = { a | ivs : Stats, evs : Stats, base : Stats, powerup : Stats}
 
 type StatsKind = Iv | Ev | Base | Powerup
 
-get : StatsKind -> Pokemon -> Stats
+get : StatsKind -> WithStats a -> Stats
 get statsKind =
   case statsKind of
     Iv -> .ivs
     Ev -> .evs
     Base -> .base
     Powerup -> .powerup
-set : StatsKind -> Stats -> Pokemon -> Pokemon
+set : StatsKind -> Stats -> WithStats a -> WithStats a
 set statsKind newValue pokemon =
   case statsKind of
     Iv -> { pokemon | ivs = newValue }
@@ -24,9 +25,16 @@ validValues statsKind =
   case statsKind of
     Iv -> 0 <-> 31
     Ev -> 0 <-> 255
-    Base -> 0 <-> 999
+    Base -> 1 <-> 255
     Powerup -> -6 <-> 6
-update : StatsKind -> (Stats -> Stats) -> Pokemon -> Pokemon
+initValue statsKind =
+  case statsKind of
+    Iv -> 31
+    Ev -> 0
+    Base -> 1
+    Powerup -> 0
+newStats statsKind = Stats.newWith <| initValue statsKind
+update : StatsKind -> (Stats -> Stats) -> WithStats a -> WithStats a
 update statsKind f pokemon = (\newValue -> set statsKind newValue pokemon) <| f <| get statsKind pokemon
 
 (<->) : Int -> Int -> List Int

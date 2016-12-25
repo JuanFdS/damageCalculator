@@ -52,5 +52,5 @@ statSetters = List.map set allStats
 statGetters : List (Stats -> Int)
 statGetters = List.map get allStats
 
-new : Stats
-new = {hp = 0, atk = 0, def = 0, spA = 0, spD = 0, spe = 0}
+newWith : Int -> Stats
+newWith value = {hp = value, atk = value, def = value, spA = value, spD = value, spe = value}
